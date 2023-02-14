@@ -7,7 +7,7 @@ const AppError = require("./utils/AppError");
 const app = express();
 app.use(express.json());
 
-console("hello")
+
 app.use(routes);
 
 database();
