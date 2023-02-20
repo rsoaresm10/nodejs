@@ -32,7 +32,7 @@ class UsersController {
 
     const database = await sqliteConnection();
     const user = await database.get("SELECT * FROM users WHERE id = (?)", [id]); // função para saber se o id do usuario ja existe 
-  if (!user) { // se o usuário não existir 
+  if (!user) {  //se o usuário não existir , o erro é lançado
 throw new AppError("Usuário não encontrado ");
   }
 
@@ -41,24 +41,30 @@ throw new AppError("Usuário não encontrado ");
     throw new AppError("este email ja está em uso");
   }
 
-  user.name = name;
-  user.email = email;
-
-  if (password && !old_password) {
-    throw new AppError("informe a senha antiga")
+  user.name = name ?? user.name; // nullish operator, caso o name não exista ele vai manter o user name que já está no banco de dados
+  user.email = email ?? user.email;
+// password se tornou a nova senha q o usuário deseja colocar
+  if (password && !old_password) { // se o usuário colocar a senha nova q deseja e não colocar a senha antiga o error vai ser jogado 
+    throw new AppError("informe a senha antiga");
   }
 
   if (password && old_password) {
-    const checkOldPassword = await compare(old_password, user.password)
+    const checkOldPassword = await compare(old_password, user.password); // comparação entre o old_password que vai ser colocado e o user password que é a atual senha do usuário
+    if (!checkOldPassword) {
+      throw new AppError("a senha antiga não confere");
+    }
+
+    user.password = await hash(password, 8) // se tudo estiver correto e a senha antiga for colocada certa, a criptografia entra na nova senha 
   }
 
   await database.run(`
   UPDATE users SET 
   name = ?,
   email = ?, 
-  updated_at = ?
+  password = ?,
+  updated_at = DATETIME('now'),
   WHERE id = ?`,
-  [user.name, user.email, new Date(), id]
+  [user.name, user.email, user.password, new Date(), id] // alteraçao sendo construida dentro do banco de dados e esperando os argumentos que vão ser passados pelo usuário
   );
 return response.json();
   }
