@@ -44,6 +44,16 @@ class NotesController {
         const notes = await knex("notes").where({id}).first(); // vai fazer a função de pegar apenas uma nota
         const tags = await knex("tags").where({notes_id: id}).orderBy("name");// vai pegar as tags quando o note_id for igual ao id passado como parametro na rota e ordenar elas em ordem alfabetica       
         const links = await knex("links").where({notes_id: id}).orderBy("created_at")
+        
+        /******************/
+        const consulta = await knex("login").where({emailusu: email}, {senhausu: senha}).first();
+
+        if(consulta.length() == 1){
+            //continua para a pagina
+
+        }
+        
+        /******************/
 
         return response.json({
             ...notes,
@@ -59,6 +69,44 @@ class NotesController {
 
         return response.json()
     }
+
+
+    async index (request, response) {
+        const { title ,user_id, tags} = request.query;
+
+        let notes;
+        if(tags) {
+            const filterTags = tags.split(',').map(tag => tag.trim()); // vai filtras as tags para que elas sejam pesquisadas na mesma query atraves da virgula e o map( para que filtre somente as tags)
+
+            notes = await knex("tags")
+            .select([
+                "notes.id", // nome da tabela + campo selecionado
+                "notes.title" , 
+                "notes.user_id",
+            ])
+            .where("notes.user_id", user_id) //vai filtrar onde na tabela notes o user_id seja igual ao q está sendo passado
+            .whereLike("notes.title" , `%${title}%`) // vai filtrar onde o notes.title seja igual ao title da interpolação
+            .whereIn("name", filterTags) //vai selecionar as tags e foi passado o name que vai estar dentro da tag para que ele compare com o array do filterTags
+            .innerJoin("notes" , "notes.id", "tags.notes_id") // na tabela notes vai ser pego o id e comparando com a tabela tag vai pegar o notes_id 
+            .orderBy("notes.title") // vai ordenar em ordem alfabetica pelo titulo
+    
+    } else {
+        notes = await knex("notes").where({user_id}).whereLike("title", `%${title}%`).orderBy("title") //vai buscar nas notas onde tem o id do usuario, o whereLike serve para buscar valores que contenham dentro de uma palavra, passando o campo que ele quer q seja feita consulta e o segundo argumento serve para que ele pesquise antes e depois da frase, se existe o que está sendo pesquisado 
+        }
+
+    const userTags = await knex("tags").where({user_id}); // vai percorrer a tabela  tags atraves do user id e devolver as tags cadastradas
+    const notesWithTags = notes.map(notes =>{ // vai percorrer as notas 
+        const noteTag = userTags.filter(tag => tag.notes_id === notes.id ) //percorrer dentro de notas para as tags e  dentro da tabela de tags ele vai comparar o tag.notes_id (que é a tabela de tags ) com o id dentro de notas
+
+        return {
+            ...notes,
+            tags: noteTag
+        }
+    
+    })
+        return response.json(notesWithTags) 
+    }
+
 }
 
     module.exports = NotesController
