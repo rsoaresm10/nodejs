@@ -4,7 +4,7 @@ const knex = require("../database/knex");
 class NotesController {
     async create(request, response) {
         const { title, description, tags, links } = request.body; //requsição dos parametros que vão ser colocados no insomnia
-        const { user_id } = request.params; // o id vai ser passado na rota
+        const  user_id  = request.user.id; // o id vai ser passado na rota
 
         const notes_id = await knex("notes").insert({
             title,    // vai inserir os dados diretamente no banco usando knex("notes")para dizer onde será o destino .insert para inserir na tabela 
@@ -35,7 +35,7 @@ class NotesController {
     
     await knex("tags").insert( tagsInsert); //na tabela tags através do knex vai ser inserido o tagsInsert
     
-    response.json();
+     return response.json();
     }
 
 
@@ -45,15 +45,7 @@ class NotesController {
         const tags = await knex("tags").where({notes_id: id}).orderBy("name");// vai pegar as tags quando o note_id for igual ao id passado como parametro na rota e ordenar elas em ordem alfabetica       
         const links = await knex("links").where({notes_id: id}).orderBy("created_at")
         
-        /******************/
-        const consulta = await knex("login").where({emailusu: email}, {senhausu: senha}).first();
-
-        if(consulta.length() == 1){
-            //continua para a pagina
-
-        }
-        
-        /******************/
+      
 
         return response.json({
             ...notes,
@@ -72,7 +64,8 @@ class NotesController {
 
 
     async index (request, response) {
-        const { title ,user_id, tags} = request.query;
+        const { title , tags} = request.query;
+        const user_id = request.user.id
 
         let notes;
         if(tags) {
