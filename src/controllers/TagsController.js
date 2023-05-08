@@ -6,6 +6,7 @@ async index (request, response) {
 
     const tags = await knex("tags")
     .where({user_id})
+    .groupBy("name") // estrategia usada para que as tags não se repitam na aplicação
     return response.json(tags)
 }
 }

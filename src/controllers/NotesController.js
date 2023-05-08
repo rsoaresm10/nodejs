@@ -6,7 +6,7 @@ class NotesController {
         const { title, description, tags, links } = request.body; //requsição dos parametros que vão ser colocados no insomnia
         const  user_id  = request.user.id; // o id vai ser passado na rota
 
-        const notes_id = await knex("notes").insert({
+        const [notes_id] = await knex("notes").insert({
             title,    // vai inserir os dados diretamente no banco usando knex("notes")para dizer onde será o destino .insert para inserir na tabela 
             description,
             user_id
@@ -81,6 +81,7 @@ class NotesController {
             .whereLike("notes.title" , `%${title}%`) // vai filtrar onde o notes.title seja igual ao title da interpolação
             .whereIn("name", filterTags) //vai selecionar as tags e foi passado o name que vai estar dentro da tag para que ele compare com o array do filterTags
             .innerJoin("notes" , "notes.id", "tags.notes_id") // na tabela notes vai ser pego o id e comparando com a tabela tag vai pegar o notes_id 
+            .groupBy("notes.id")
             .orderBy("notes.title") // vai ordenar em ordem alfabetica pelo titulo
     
     } else {

@@ -2,14 +2,17 @@ require("express-async-errors");
 const migrationsRun = require("./database/sqlite/migrations");
 const express = require("express");
 const routes = require("./routes");
+const uploadConfig = require("./config/upload")
 migrationsRun();
-
+const cors = require("cors")
 const AppError = require("./utils/AppError");
 const app = express();
 app.use(express.json());
 
-
+app.use(cors()); // vai fazer com que o backend atenda as requisições do frontend
 app.use(routes);
+app.use("/files", express.static(uploadConfig.UPLOAD_FOLDER));
+
 
 app.use((error, request, response, next ) =>{
 if(error instanceof AppError) {

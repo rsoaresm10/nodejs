@@ -1,3 +1,5 @@
+//token de autenticação
+
 module.exports ={
     jwt: {
      secret: "default",
